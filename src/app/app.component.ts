@@ -1,10 +1,36 @@
-import { Component } from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
+import { AuthService } from './auth/services/auth.service';
+import { Router } from '@angular/router';
+import { AuthStatus } from './auth/interfaces';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
-  title = 'auth-app';
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
+  constructor() {
+    effect(() => {
+      console.log(this.authService.authStatus());
+    });
+  }
+
+  public finishedAuthChecking = computed<boolean>(() => {
+    return this.authService.authStatus() === AuthStatus.checking ? false : true;
+  });
+
+  public authStatusChangedEffect = effect(() => {
+    switch (this.authService.authStatus()) {
+      case AuthStatus.checking:
+        return;
+      case AuthStatus.authenticated:
+        this.router.navigateByUrl('/dashboard');
+        return;
+      case AuthStatus.notAuthenticated:
+        this.router.navigateByUrl('/login');
+    }
+  });
 }
